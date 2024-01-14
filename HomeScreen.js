@@ -13,6 +13,7 @@ export const LOTD_HomeScreen = ({navigation}) => {
 				navigation.replace('Notification', {
 					notificationImagePath: require('./assets/eye_ok_icon.png'),
 					notificationText: 'Done!',
+					nextRoute: 'Venue'
 				});
 			}}/>
 			<Image source={require('./assets/home_background.png')} style={styles.background_image}/>

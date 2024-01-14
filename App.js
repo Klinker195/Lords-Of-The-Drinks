@@ -6,6 +6,7 @@ import { useFonts } from 'expo-font';
 import { LOTD_AuthScreen } from './AuthScreen';
 import { LOTD_HomeScreen } from './HomeScreen';
 import { LOTD_NotificationScreen } from './NotificationScreen';
+import { LOTD_VenueScreen } from './VenueScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export default function App() {
 				<Stack.Screen name="Auth" component={LOTD_AuthScreen} options={{headerShown: false}}/>
 				<Stack.Screen name="Home" component={LOTD_HomeScreen} options={{headerShown: false}}/>
 				<Stack.Screen name="Notification" component={LOTD_NotificationScreen} options={{headerShown: false}} initialParams={{notificationImagePath: require('./assets/eye_ok_icon.png'), notificationText: '[Notification text]'}} />
+				<Stack.Screen name="Venue" component={LOTD_VenueScreen} options={{headerShown: false}}/>
 			</Stack.Navigator>
 		</NavigationContainer>
   	)

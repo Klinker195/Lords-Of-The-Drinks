@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 
 export const LOTD_NotificationScreen = ({route, navigation}) => {
 
-	const { notificationImagePath, notificationText } = route.params
+	const { notificationImagePath, notificationText, nextRoute } = route.params
 
 	return (
 		<View style={[styles.centered_container, {paddingTop: '10%'}]}>
@@ -22,7 +22,7 @@ export const LOTD_NotificationScreen = ({route, navigation}) => {
 				<Image style={{width: '75%'}} source={notificationImagePath} resizeMode='contain'/>
 			</View>
 			<View style={{flex: 1, alignItems: 'center', justifyContent: 'center', paddingLeft: '5%', paddingRight: '5%'}}>
-				<LOTD_Button key='ok-button' title='NEXT' onPress={() => navigation.replace('Home')}/>
+				<LOTD_Button key='ok-button' title='NEXT' onPress={() => navigation.replace(nextRoute)}/>
 			</View>
 			<StatusBar style='light' backgroundColor='#FF5569'/>
 		</View>
