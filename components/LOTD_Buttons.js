@@ -2,15 +2,65 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, TextInput, View, Image, ImageBackground, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Button, TouchableOpacity, Alert } from 'react-native';
 import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome } from '@expo/vector-icons';
 
+// Linear Gradient missing props? start={{x: 0, y: 1}} end={{x: 1, y: 1}}
 export const LOTD_Button = (props) => {
     return (
         <>
             <TouchableOpacity style={styles.centered_gradient_button} onPress={props.onPress}>
-            	<LinearGradient colors={['#FF5569', '#FF6634']} style={styles.linear_gradient} start={{x: 0, y: 1}} end={{x: 1, y: 1}}>
-              	<Text style={{fontFamily: 'RedHatText-Bold', color: 'white', textTransform: 'uppercase'}}>{props.title}</Text>
+            	<LinearGradient colors={['#FF5569', '#FF6634']} style={styles.linear_gradient} >
+              	    <Text style={{fontFamily: 'RedHatText-Bold', color: 'white', textTransform: 'uppercase'}}>{props.title}</Text>
             	</LinearGradient>
           	</TouchableOpacity>
+        </>
+    )
+}
+
+export const LOTD_AbsoluteTopLeftFloatingButton = (props) => {
+    return (
+        <>
+            <TouchableOpacity style={styles.absolute_top_left_floating_button} onPress={props.onPress} >
+                <LinearGradient colors={['#FF5569', '#FF6634']} style={styles.round_linear_gradient} >
+                        <FontAwesome name={props.buttonType} size={24} color="white" />
+                </LinearGradient>
+            </TouchableOpacity>
+        </>
+    )
+}
+
+export const LOTD_AddDrinkFloatingButton = (props) => {
+    return (
+        <>
+            <TouchableOpacity style={styles.floating_add_button} onPress={props.onPress} >
+                <LinearGradient colors={['#FF5569', '#FF6634']} style={styles.round_linear_gradient} >
+                    <FontAwesome name="plus" size={24} color="white" />
+            	</LinearGradient>
+            </TouchableOpacity>
+        </>
+    )
+}
+
+export const LOTD_PrimaryBottomFloatingButton = (props) => {
+    return (
+        <>
+            <TouchableOpacity style={[styles.floating_button, styles.primary_bottom_floating_button]} onPress={props.onPress} >
+                <LinearGradient colors={['#FF5569', '#FF6634']} style={styles.round_linear_gradient} >
+                    <FontAwesome name={props.buttonType} size={24} color="white" />
+            	</LinearGradient>
+            </TouchableOpacity>
+        </>
+    )
+}
+
+export const LOTD_SecondaryBottomFloatingButton = (props) => {
+    return (
+        <>
+            <TouchableOpacity style={[styles.floating_button, styles.secondary_bottom_floating_button]} onPress={props.onPress}>
+                <LinearGradient colors={['#FF5569', '#FF6634']} style={styles.round_linear_gradient} >
+                    <FontAwesome name={props.buttonType} size={24} color="white" />
+            	</LinearGradient>
+            </TouchableOpacity>
         </>
     )
 }
@@ -77,6 +127,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 5
     },
+    round_linear_gradient: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5,
+        borderRadius: 100
+    },
     centered_gradient_button: {
     	alignItems: 'center',
     	backgroundColor: 'transparent',
@@ -85,5 +143,42 @@ const styles = StyleSheet.create({
     	width: '100%',
     	marginTop: 20,
     	justifyContent: 'center',
-  	}
+  	},
+    secondary_bottom_floating_button: {
+		bottom: 20,
+		right: 80,
+	},
+	primary_bottom_floating_button: {
+		bottom: 20,
+		right: 20,
+	},
+    floating_button: {
+		position: 'absolute',
+		width: 50,
+		height: 50,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderRadius: 25,
+		elevation: 3
+	},
+    floating_add_button: {
+		width: 75,
+		height: 75,
+		borderRadius: 50,
+		padding: 10,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+    absolute_top_left_floating_button: {
+        position: 'absolute',
+        top: 60,
+        left: 20,
+        width: 50,
+        height: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 25, 
+        backgroundColor: '#FF5569',
+        elevation: 3
+    }
 });
