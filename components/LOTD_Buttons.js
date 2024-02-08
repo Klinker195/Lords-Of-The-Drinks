@@ -59,6 +59,11 @@ export const LOTD_SecondaryBottomFloatingButton = (props) => {
             <TouchableOpacity style={[styles.floating_button, styles.secondary_bottom_floating_button]} onPress={props.onPress}>
                 <LinearGradient colors={['#FF5569', '#FF6634']} style={styles.round_linear_gradient} >
                     <FontAwesome name={props.buttonType} size={24} color="white" />
+                    {props.cartCount > 0 && (
+                        <View style={styles.cartCountBubble}>
+                            <Text style={styles.cartCountText}>{props.cartCount}</Text>
+                        </View>
+                    )}
             	</LinearGradient>
             </TouchableOpacity>
         </>
@@ -180,5 +185,21 @@ const styles = StyleSheet.create({
         borderRadius: 25, 
         backgroundColor: '#FF5569',
         elevation: 3
+    },
+    cartCountBubble: {
+        position: 'absolute',
+        right: -10, // A seconda delle dimensioni del tuo bottone, potresti dover aggiustare questo valore
+        top: -3,
+        backgroundColor: '#ff9d00',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+        cartCountText: {
+        color: '#242321',
+        fontSize: 12,
+        fontWeight: 'bold',
     }
 });

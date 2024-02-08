@@ -7,6 +7,9 @@ import { LOTD_AuthScreen } from './AuthScreen';
 import { LOTD_HomeScreen } from './HomeScreen';
 import { LOTD_NotificationScreen } from './NotificationScreen';
 import { LOTD_VenueScreen } from './VenueScreen';
+import { LOTD_OrderSummaryScreen } from './OrderSummaryScreen';
+import { LOTD_CheckoutScreen } from './CheckoutScreen';
+import { getValueFor } from './utils/AsyncStorage'
 
 const Stack = createNativeStackNavigator();
 
@@ -22,11 +25,34 @@ export default function App() {
 
   	return (
 		<NavigationContainer>
-			<Stack.Navigator>
+			<Stack.Navigator
+				initialRouteName="Auth">
 				<Stack.Screen name="Auth" component={LOTD_AuthScreen} options={{headerShown: false}}/>
 				<Stack.Screen name="Home" component={LOTD_HomeScreen} options={{headerShown: false}}/>
 				<Stack.Screen name="Notification" component={LOTD_NotificationScreen} options={{headerShown: false}} initialParams={{notificationImagePath: require('./assets/eye_ok_icon.png'), notificationText: '[Notification text]'}} />
 				<Stack.Screen name="Venue" component={LOTD_VenueScreen} options={{headerShown: false}}/>
+				<Stack.Screen name="OrderSummary" component={LOTD_OrderSummaryScreen} options={{
+					title: 'Order summary',
+					headerShown: true,
+					headerStyle: {
+						backgroundColor: '#FF5569',
+					},
+					headerTintColor: '#FFFFFF',
+					headerTitleStyle: {
+						fontFamily: 'RedHatText-Bold',
+					}
+					}}/>
+				<Stack.Screen name="Checkout" component={LOTD_CheckoutScreen} options={{
+					title: 'Checkout',
+					headerShown: true,
+					headerStyle: {
+						backgroundColor: '#FF5569',
+					},
+					headerTintColor: '#FFFFFF',
+					headerTitleStyle: {
+						fontFamily: 'RedHatText-Bold',
+					}
+					}}/>
 			</Stack.Navigator>
 		</NavigationContainer>
   	)

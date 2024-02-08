@@ -8,8 +8,18 @@ import { LOTD_Input } from './components/LOTD_Input';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LOTD_Button, LOTD_DoubleAltButton } from './components/LOTD_Buttons';
 import { useState, useEffect } from 'react';
+import { save, getValueFor } from './utils/AsyncStorage'
+import { apiLogin, apiSignUp } from './utils/LOTD_Api';
 
 export const LOTD_AuthScreen = ({navigation}) => {
+
+	useEffect(() => {
+		getValueFor('userToken').then((token) => {
+			if (token != "0" && token) {
+				navigation.replace('Home')
+			}
+		})
+	}, []);
 
 	const [index, setIndex] = useState(0)
 	const [email, setEmail] = useState('')
@@ -21,6 +31,76 @@ export const LOTD_AuthScreen = ({navigation}) => {
     	setPassword('');
     	setConfirmPassword('');
   	};
+
+	const validateEmail = (email) => {
+		const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return regex.test(email);
+	};
+	
+	const validatePassword = (password) => {
+		const regex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+		return regex.test(password);
+	};
+
+	const handleLoginButtonClick = (email, password) => {
+		let errorMessage = '';
+
+		if (!email) {
+			errorMessage += 'Email field cannot be empty.\n';
+		} else if (!validateEmail(email)) {
+			errorMessage += 'Invalid email.\n';
+		}
+
+		if (!password) {
+			errorMessage += 'Password field cannot be empty.\n';
+		}
+
+		if (errorMessage) {
+			Alert.alert('Validation error', errorMessage);
+		} else {
+			apiLogin(email, password).then((token) => {
+				if (token != "0" && token) {
+					save('userToken', token).then(getValueFor('userToken').then((token) => console.log('storage = ' + token)))
+					navigation.replace('Home')
+				} else {
+					Alert.alert('Login error', 'Incorrect credentials.\n');
+				}
+			})
+		}
+	}
+
+	const handleSignUpButtonClick = (email, password, confirmPassword) => {
+		let errorMessage = '';
+
+		if (!email) {
+			errorMessage += 'Email field cannot be empty.\n';
+		} else if (!validateEmail(email)) {
+			errorMessage += 'Invalid email.\n';
+		}
+
+		if (!password) {
+			errorMessage += 'Password field cannot be empty.\n';
+		} else if (!validatePassword(password)) {
+			errorMessage += 'Password length must be at least 8 characters and must contain letters and numbers.\n';
+		}
+
+		if (confirmPassword != password) {
+			errorMessage += 'Password confirmation field must be equal to password field.\n';
+		}
+
+		if (errorMessage) {
+			Alert.alert('Validation error', errorMessage);
+		} else {
+			apiSignUp(email, password).then((token) => {
+				if (token != "0" && token) {
+					save('userToken', token).then(getValueFor('userToken').then((token) => console.log(token)))
+					navigation.replace('Home')
+				} else {
+					Alert.alert('Signup error', 'Couldn\'t register user.\n');
+				}
+			})
+		}
+	}
 
 	useEffect(() => {
 		const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', Keyboard.dismiss);
@@ -42,14 +122,14 @@ export const LOTD_AuthScreen = ({navigation}) => {
 						<>
 							<LOTD_Input key='login-email-input' title='Email' autoComplete='email' inputMode='email' fontSize={16} value={email} onChangeText={(text) => setEmail(text)}/>
 							<LOTD_Input key='login-password-input' title='Password' autoComplete='current-password' secureTextEntry={true} securityCheck={true} fontSize={16} value={password}  onChangeText={(text) => setPassword(text)}/>
-							<LOTD_Button key='login-button' title='LOGIN' onPress={() => navigation.replace('Home')}/>
+							<LOTD_Button key='login-button' title='LOGIN' onPress={() => handleLoginButtonClick(email, password)}/>
 						</>
 						:
 						<>
 							<LOTD_Input key='registration-email-input' title='Email' autoComplete='email' inputMode='email' fontSize={16} value={email}  onChangeText={(text) => setEmail(text)}/>
 							<LOTD_Input key='registration-password-input' title='Password' autoComplete='current-password' secureTextEntry={true} securityCheck={true} fontSize={16} value={password} onChangeText={(text) => setPassword(text)}/>
 							<LOTD_Input key='registration-confirmpassword-input' title='Confirm password' autoComplete='current-password' secureTextEntry={true} securityCheck={true} fontSize={16} value={confirmPassword} onChangeText={(text) => setConfirmPassword(text)}/>
-							<LOTD_Button key='register-button' title='REGISTER' onPress={() => navigation.replace('Home')}/>
+							<LOTD_Button key='register-button' title='REGISTER' onPress={() => handleSignUpButtonClick(email, password, confirmPassword)}/>
 						</>
 					}
 					

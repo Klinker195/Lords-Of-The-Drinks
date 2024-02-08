@@ -1,12 +1,24 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image } from 'react-native';
 import { LOTD_TopRightProfileButton, LOTD_TopLeftLogoutButton, LOTD_EyeQRButton } from './components/LOTD_Buttons';
+import { getValueFor, deleteSecureItem } from './utils/AsyncStorage'
+import { apiLogout } from './utils/LOTD_Api';
 
 export const LOTD_HomeScreen = ({navigation}) => {
+	const handleLogoutButtonClick = () => {
+		getValueFor('userToken').then((token) => {
+			apiLogout(token).then((token) => {
+				if (token == "0") {
+					deleteSecureItem('userToken').then(navigation.replace('Auth'))
+				}
+			})
+		})
+	}
+
 	return (
 		<View style={[styles.centered_container, {paddingBottom: '30%'}]}>
 			<LOTD_TopRightProfileButton />
-			<LOTD_TopLeftLogoutButton onPress={() => navigation.replace('Auth')}/>
+			<LOTD_TopLeftLogoutButton onPress={() => handleLogoutButtonClick()}/>
 			<Text style={{fontFamily: 'RedHatText-Bold', fontSize: 24, color: '#FF5F52'}}>Tap to scan QR code!</Text>
 			<Image source={require('./assets/arrow_downward.png')} style={styles.arrow_icon_image}/>
 			<LOTD_EyeQRButton onPress={() => {

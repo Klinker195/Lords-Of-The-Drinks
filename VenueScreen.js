@@ -10,8 +10,116 @@ import { LOTD_Button, LOTD_DoubleAltButton } from './components/LOTD_Buttons';
 import { useState, useEffect } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { LOTD_AbsoluteTopLeftFloatingButton, LOTD_AddDrinkFloatingButton, LOTD_PrimaryBottomFloatingButton, LOTD_SecondaryBottomFloatingButton } from './components/LOTD_Buttons';
+import { LOTD_DividerLine } from './components/LOTD_Lines'
+import { getValueFor } from './utils/AsyncStorage'
+import { apiGetVenue, apiGetVenueDrinks, apiGetRecommendedVenueDrinks } from './utils/LOTD_Api';
+
+import cocktail1 from './assets/cocktail_shakes_images/cocktail_1.png';
+import cocktail2 from './assets/cocktail_shakes_images/cocktail_2.png';
+import cocktail3 from './assets/cocktail_shakes_images/cocktail_3.png';
+import shake1 from './assets/cocktail_shakes_images/shake_1.png';
+import shake2 from './assets/cocktail_shakes_images/shake_2.png';
+import shake3 from './assets/cocktail_shakes_images/shake_3.png';
+
+const cocktailImages = [cocktail1, cocktail2, cocktail3]
+const shakeImages = [shake1, shake2, shake3]
 
 export const LOTD_VenueScreen = ({navigation}) => {
+
+	const [venue, setVenue] = useState({
+		id: "1",
+		name: "",
+		description: ""
+	});
+
+	const [drinks, setDrinks] = useState([]);
+	const [recommendedDrinks, setRecommendedDrinks] = useState([]);
+	const [searchText, setSearchText] = useState('');
+	const [cartCount, setCartCount] = useState(0);
+
+	useEffect(() => {
+		getValueFor('userToken').then((token) => {
+			if (token != "0") {
+				apiGetVenue(token).then((venueData) => {
+					setVenue(venueData)
+					apiGetVenueDrinks(token, venueData.id).then((drinksData) => {
+						const drinksDataWithQuantity = drinksData.map(drink => ({
+							...drink,
+							quantity: 0
+						}));
+						setDrinks(drinksDataWithQuantity)
+					})
+					apiGetRecommendedVenueDrinks(token, venueData.id).then((drinksData) => {
+						const recommendedDrinksWithQuantity = drinksData.map(drink => ({
+							...drink,
+							quantity: 0
+						}));
+						setRecommendedDrinks(recommendedDrinksWithQuantity)
+					})
+				});
+			}
+		});
+	}, []);
+
+	const updateCartCount = (drinkName) => {
+		const updatedDrinks = drinks.map(drink => {
+			if(drink.name === drinkName) {
+				return { ...drink, quantity: drink.quantity + 1 }
+			}
+			return drink
+		})
+
+		setDrinks(updatedDrinks)
+		setCartCount(prevCartCount => prevCartCount + 1);
+	}
+
+	const renderDrinksByType = (type) => {
+		const filteredDrinks = drinks.filter(drink => 
+			drink.type === type && 
+			(drink.name.toLowerCase().includes(searchText.toLowerCase()) || 
+			drink.description.replace(/,/g, '').toLowerCase().includes(searchText.toLowerCase()))
+		);
+	  
+		if (filteredDrinks.length === 0) {
+			return <Text style={styles.notFoundText}>Nothing found.</Text>;
+		}
+	  
+		return filteredDrinks.map((drink, index) => (
+			<LOTD_DrinkCard
+				key={index}
+				index={index}
+				name={drink.name}
+				price={`${drink.price} €`}
+				ingredients={drink.description}
+				type={drink.type}
+				onAddButtonPress={updateCartCount}
+			/>
+		));
+	};
+	  
+	const renderRecommendedDrinks = () => {
+		const filteredDrinks = recommendedDrinks.filter(drink => 
+			(drink.name.toLowerCase().includes(searchText.toLowerCase()) || 
+			drink.description.replace(/,/g, '').toLowerCase().includes(searchText.toLowerCase()))
+		);
+	  
+		if (filteredDrinks.length === 0) {
+			return <Text style={styles.notFoundText}>Nothing found.</Text>;
+		}
+	  
+		return filteredDrinks.map((drink, index) => (
+			<LOTD_DrinkCard
+				key={index}
+				index={index}
+				name={drink.name}
+				price={`${drink.price} €`}
+				ingredients={drink.description}
+				type={drink.type}
+				onAddButtonPress={updateCartCount}
+			/>
+		));
+	};
+
 	return (
 		<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 			<Pressable>
@@ -22,36 +130,26 @@ export const LOTD_VenueScreen = ({navigation}) => {
 							<LOTD_AbsoluteTopLeftFloatingButton buttonType="sign-out" onPress={() => navigation.replace("Home")}/>
 							<View style={styles.white_wide_rounded_box}>
 								<View style={{paddingBottom: 50}}>
-									<LOTD_GradientBox text="The Prancing Pony" mode="header" />
+									<LOTD_GradientBox text={venue.name} mode="header" />
 									<Text style={styles.venue_description}>
-										The Prancing Pony, Bree's hottest spot, is not just an inn – it's a vibe. Catering to both locals and wanderlust-driven travelers, this iconic hangout offers a fusion of craft beers, mouthwatering bites, and cozy accommodations. Positioned at the bustling crossroads of the Great East Road and the Greenway in Eriador, it's the epicenter of cool at the base of the Bree-hill.
+										{venue.description}
 									</Text>
 									<LOTD_DividerLine />
-									<TextInput style={styles.search_bar} placeholder="Search" />
+									<TextInput style={styles.search_bar} placeholder="Search" onChangeText={setSearchText} />
 									<LOTD_GradientBox text="✌ Recommended by us" mode="subtitle" />
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_GradientBox text="⭐ Your favorites" mode="subtitle" />
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
+									{renderRecommendedDrinks()}
 									<LOTD_GradientBox text="🍸 Drinks" mode="subtitle" />
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
+									{renderDrinksByType('C')}
 									<LOTD_GradientBox text="🍹 Shakes" mode="subtitle" />
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
-									<LOTD_DrinkCard name="Stardust Elixir" price="8,50 €" ingredients="Gin, elderflower liqueur, edible sugar glitter"/>
+									{renderDrinksByType('S')}
 								</View>
 							</View>
 							<StatusBar style='light' backgroundColor='#FF5569' />
 						</View>
 					</Pressable>
 				</ScrollView>
-				<LOTD_PrimaryBottomFloatingButton buttonType="euro"/>
-				<LOTD_SecondaryBottomFloatingButton buttonType="shopping-cart"/>
+				<LOTD_PrimaryBottomFloatingButton buttonType="euro" onPress={() => navigation.navigate('Checkout')} />
+				<LOTD_SecondaryBottomFloatingButton buttonType="shopping-cart" onPress={() => navigation.navigate('OrderSummary')} cartCount={cartCount} />
 			</Pressable>
 		</TouchableWithoutFeedback>
 	);
@@ -70,20 +168,18 @@ const LOTD_VenueImageBackground = (props) => {
 	)
 }
 
-const LOTD_DividerLine = () => {
-	return (
-		<>
-			<View style={styles.divider_line} />
-		</>
-	)
-}
-
 const LOTD_DrinkCard = (props) => {
+
+	const images = props.type === 'C' ? cocktailImages : shakeImages;
+
+	const imageIndex = props.index % images.length;
+    const randomImage = images[imageIndex];
+
 	return (
 		<>
 			<View style={styles.card_container}>
 				<Image
-					source={require('./assets/drink_default_image.png')}
+					source={randomImage}
 					style={styles.image}
 				/>
 				<View style={styles.info_container}>
@@ -91,7 +187,7 @@ const LOTD_DrinkCard = (props) => {
 					<Text style={styles.drink_price}>{ props.price }</Text>
 					<Text style={styles.drink_ingredients}>{ props.ingredients }</Text>
 				</View>
-				<LOTD_AddDrinkFloatingButton />
+				<LOTD_AddDrinkFloatingButton onPress={() => props.onAddButtonPress(props.name)}/>
 			</View>
 		</>
 	);
@@ -257,6 +353,14 @@ const styles = StyleSheet.create({
 		padding: 10,
 		alignItems: 'center',
 		justifyContent: 'center'
+	},
+	notFoundText: {
+		fontFamily: 'RedHatText-Medium',
+		paddingTop: 15,
+		paddingBottom: 15,
+		alignSelf: 'center',
+		fontSize: 16,
+		color: '#A8A8A8'
 	}
 	// Aggiungi qui altri stili se necessario
 });

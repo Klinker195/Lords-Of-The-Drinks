@@ -4,6 +4,12 @@ import { useState } from 'react';
 
 export const LOTD_Input = (props) => {
 
+	let minHeight = props.minHeight
+
+	let textAlignVertical = props.textAlignVertical
+
+	let multiline = props.multiline
+
 	let isSecure = props.secureTextEntry
 
 	let paddingRight = isSecure ? 45 : 10
@@ -19,7 +25,7 @@ export const LOTD_Input = (props) => {
         	<View style={{paddingBottom: 20}}>
             	<Text style={[styles.input_field_title, {fontSize: props.fontSize, fontFamily: 'RedHatText-Bold'}]}>{props.title}</Text>
 				<View style={styles.input_container}>
-					<TextInput style={[styles.white_input_grey_outline, {fontFamily: 'RedHatText-Medium', paddingRight: paddingRight}]} inputMode={props.inputMode} autoComplete={props.autoComplete} secureTextEntry={secureTextEntry} cursorColor='#FF5F52' value={props.value} onChangeText={props.onChangeText}/>
+					<TextInput style={[styles.white_input_grey_outline, {fontFamily: 'RedHatText-Medium', paddingRight: paddingRight}, minHeight && { minHeight: minHeight }, textAlignVertical && {textAlignVertical: textAlignVertical}]} inputMode={props.inputMode} autoComplete={props.autoComplete} secureTextEntry={secureTextEntry} cursorColor='#FF5F52' value={props.value} onChangeText={props.onChangeText} multiline={multiline || false} />
 					{getSecureTextEntryViewer(isSecure, switchSecureTextEntry, secureTextEntry)}
 				</View>
 
