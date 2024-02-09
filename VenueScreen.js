@@ -12,7 +12,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LOTD_AbsoluteTopLeftFloatingButton, LOTD_AddDrinkFloatingButton, LOTD_PrimaryBottomFloatingButton, LOTD_SecondaryBottomFloatingButton } from './components/LOTD_Buttons';
 import { LOTD_DividerLine } from './components/LOTD_Lines'
 import { getValueFor } from './utils/AsyncStorage'
-import { apiGetVenue, apiGetVenueDrinks, apiGetRecommendedVenueDrinks } from './utils/LOTD_Api';
+import { apiGetVenue, apiGetVenueDrinks, apiGetRecommendedVenueDrinks, apiPayOrder } from './utils/LOTD_Api';
+import { useDrinks } from './utils/DrinksContext';
 
 import cocktail1 from './assets/cocktail_shakes_images/cocktail_1.png';
 import cocktail2 from './assets/cocktail_shakes_images/cocktail_2.png';
@@ -32,46 +33,95 @@ export const LOTD_VenueScreen = ({navigation}) => {
 		description: ""
 	});
 
-	const [drinks, setDrinks] = useState([]);
+	const { drinks, setDrinks, cartCount, setCartCount, updateCartCount } = useDrinks();
+
 	const [recommendedDrinks, setRecommendedDrinks] = useState([]);
 	const [searchText, setSearchText] = useState('');
-	const [cartCount, setCartCount] = useState(0);
 
 	useEffect(() => {
 		getValueFor('userToken').then((token) => {
 			if (token != "0") {
 				apiGetVenue(token).then((venueData) => {
-					setVenue(venueData)
-					apiGetVenueDrinks(token, venueData.id).then((drinksData) => {
-						const drinksDataWithQuantity = drinksData.map(drink => ({
-							...drink,
-							quantity: 0
-						}));
-						setDrinks(drinksDataWithQuantity)
-					})
-					apiGetRecommendedVenueDrinks(token, venueData.id).then((drinksData) => {
-						const recommendedDrinksWithQuantity = drinksData.map(drink => ({
-							...drink,
-							quantity: 0
-						}));
-						setRecommendedDrinks(recommendedDrinksWithQuantity)
-					})
-				});
+					if('token' in venueData && venueData.token == "0") {
+						Alert.alert(
+							"Something went wrong",
+							"Couldn\'t fetch venue details.",
+							[ { text: "Ok", onPress: () => { navigation.replace("Home"); } } ]
+						);
+					} else {
+						setVenue(venueData)
+						apiGetVenueDrinks(token, venueData.id).then((drinksData) => {
+							const drinksDataWithQuantity = drinksData.map(drink => ({
+								...drink,
+								quantity: 0
+							}));
+							setDrinks(drinksDataWithQuantity)
+						})
+						apiGetRecommendedVenueDrinks(token, venueData.id).then((drinksData) => {
+							const recommendedDrinksWithQuantity = drinksData.map(drink => ({
+								...drink,
+								quantity: 0
+							}));
+							setRecommendedDrinks(recommendedDrinksWithQuantity)
+						})
+					}
+				}).catch(() => {
+					Alert.alert(
+						"Something went wrong",
+						"Couldn\'t fetch venue details.",
+						[ { text: "Ok", onPress: () => { navigation.replace("Home"); } } ]
+					);
+				})
 			}
 		});
 	}, []);
 
-	const updateCartCount = (drinkName) => {
-		const updatedDrinks = drinks.map(drink => {
-			if(drink.name === drinkName) {
-				return { ...drink, quantity: drink.quantity + 1 }
-			}
-			return drink
-		})
+    const confirmBackAndPay = () => {
+        Alert.alert(
+            "Attention",
+            "Are you sure you want to quit?\nAny pending payment will be done automatically.",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => console.log("Operation aborted."),
+                    style: "cancel"
+                },
+                { 
+                    text: "Confirm", onPress: () => {
+						getValueFor('userToken').then((token) => {
+							apiPayOrder(token, 1).then((token) => {
+								if (token != "0") {
+									console.log("Payment successful.")
+									
+									setDrinks([])
+									setCartCount(0);
 
-		setDrinks(updatedDrinks)
-		setCartCount(prevCartCount => prevCartCount + 1);
-	}
+									navigation.replace('Notification', {
+										notificationImagePath: require('./assets/eye_heart_icon.png'),
+										notificationText: 'Payment successful!',
+										nextRoute: 'Home',
+										replace: true
+									});
+								} else if (token == "-1") {
+									console.log("Nothing to pay.")
+									navigation.replace("Home")
+								} else {
+									console.log("Payment failed.")
+				
+									navigation.replace('Notification', {
+										notificationImagePath: require('./assets/eye_error_icon.png'),
+										notificationText: 'Payment failed!',
+										nextRoute: 'Venue',
+										replace: false
+									});
+								}
+							})
+						})
+                    }
+                }
+            ]
+        );
+    };
 
 	const renderDrinksByType = (type) => {
 		const filteredDrinks = drinks.filter(drink => 
@@ -127,7 +177,7 @@ export const LOTD_VenueScreen = ({navigation}) => {
 					<Pressable>
 						<View style={[styles.centered_container, { paddingTop: '70%' }]}>
 							<LOTD_VenueImageBackground />
-							<LOTD_AbsoluteTopLeftFloatingButton buttonType="sign-out" onPress={() => navigation.replace("Home")}/>
+							<LOTD_AbsoluteTopLeftFloatingButton buttonType="sign-out" onPress={confirmBackAndPay}/>
 							<View style={styles.white_wide_rounded_box}>
 								<View style={{paddingBottom: 50}}>
 									<LOTD_GradientBox text={venue.name} mode="header" />

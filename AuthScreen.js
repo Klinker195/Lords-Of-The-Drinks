@@ -60,7 +60,7 @@ export const LOTD_AuthScreen = ({navigation}) => {
 		} else {
 			apiLogin(email, password).then((token) => {
 				if (token != "0" && token) {
-					save('userToken', token).then(getValueFor('userToken').then((token) => console.log('storage = ' + token)))
+					save('userToken', token).then(getValueFor('userToken').then((token) => console.log('userToken = ' + token)))
 					navigation.replace('Home')
 				} else {
 					Alert.alert('Login error', 'Incorrect credentials.\n');

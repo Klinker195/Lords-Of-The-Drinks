@@ -11,44 +11,85 @@ import { useState, useEffect, useMemo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { LOTD_AbsoluteTopLeftFloatingButton, LOTD_AddDrinkFloatingButton, LOTD_PrimaryBottomFloatingButton, LOTD_SecondaryBottomFloatingButton } from './components/LOTD_Buttons';
 import { LOTD_DividerLine } from './components/LOTD_Lines'
+import { apiGetOrderDetails, apiPayOrder } from './utils/LOTD_Api';
+import { getValueFor } from './utils/AsyncStorage';
 
 export const LOTD_CheckoutScreen = ({navigation}) => {
 
-	const [items, setItems] = useState([
-		{ id: 1, name: 'Stardust Elixir', quantity: 1, price: 8.50 },
-		{ id: 2, name: 'Droga pazza', quantity: 1, price: 8.50 }
-	]);
+    const [drinks, setDrinks] = useState([]);
+    const [total, setTotal] = useState(0.0);
 
-	const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)
+	useEffect(() => {
+		getValueFor('userToken').then((token) => {
+			apiGetOrderDetails(token, 1).then((orderDetails) => {
+				if(orderDetails && orderDetails.drinks) {
+					setDrinks(orderDetails.drinks)
+					setTotal(orderDetails.total_price)
+				}
+			})
+		})
+    }, []);
+
+	const handlePayOrderClick = () => {
+		
+		if (total === 0.0) {
+			Alert.alert("Empty checkout", "There are no drinks to pay.");
+			return; 
+		}
+
+		getValueFor('userToken').then((token) => {
+			apiPayOrder(token, 1).then((token) => {
+				if (token != "0") {
+					console.log("Payment successful.")
+
+					navigation.replace('Notification', {
+						notificationImagePath: require('./assets/eye_heart_icon.png'),
+						notificationText: 'Payment successful!',
+						nextRoute: 'Home',
+						replace: true
+					});
+				} else {
+					console.log("Payment failed.")
+
+					navigation.replace('Notification', {
+						notificationImagePath: require('./assets/eye_error_icon.png'),
+						notificationText: 'Payment failed!',
+						nextRoute: 'Venue',
+						replace: false
+					});
+				}
+			})
+		})
+	}
 
 	return (
 		<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 			<Pressable>
-				<ScrollView style={[styles.scroll_view, {height: '35%', backgroundColor: '#FFFFFF'}]} contentContainerStyle={{ flexGrow: 1 }}>
+				<ScrollView style={[styles.scroll_view, {height: '65%', backgroundColor: '#FFFFFF'}]} contentContainerStyle={{ flexGrow: 1 }}>
 					<Pressable>
-						{items.map(item => (
-							<LOTD_CartItem
-								key={item.id}
-								productId={item.id}
-								productName={item.name}
-								quantity={item.quantity}
-								price={item.price}
-							/>
-						))}
+						{drinks.map(drink => (
+                            <LOTD_CartItem
+                                key={drink.id}
+                                productId={drink.id}
+                                productName={drink.name}
+                                quantity={drink.quantity}
+                                price={drink.price}
+                            />
+                        ))}
 					</Pressable>
 				</ScrollView>
-				<View style={{backgroundColor: '#FFFFFF', height: '65%'}}>
+				<View style={{backgroundColor: '#FFFFFF', height: '25%'}}>
 					<View style={{backgroundColor: '#FFFFFF', flex: 1, flexDirection: 'column', justifyContent: 'flex-end', alignContent: 'flex-end'}}>
-						<View style={{paddingLeft: 20, paddingRight: 20, flex: 0.3}}>
+						<View style={{paddingLeft: 20, paddingRight: 20, flex: 0.8}}>
 							<LOTD_DividerLine />
 							<View style={{alignContent: 'center', alignItems: 'center'}}>
 								<Text style={{fontSize: 32, fontFamily: 'RedHatText-Bold'}}>Totale</Text>
-								<Text style={{fontSize: 32, fontFamily: 'RedHatText-Bold'}}>{`${total}€`}</Text>
+								<Text style={{fontSize: 32, fontFamily: 'RedHatText-Bold'}}>{`${total.toFixed(2)}€`}</Text>
 							</View>
 						</View>
 						
 						<View style={{paddingLeft: 20, paddingRight: 20, backgroundColor: '#FFFFFF', flex: 0.25}}>
-							<LOTD_Button title="Place order"/>
+							<LOTD_Button title="Pay order" onPress={handlePayOrderClick}/>
 						</View>
 					</View>
 				</View>

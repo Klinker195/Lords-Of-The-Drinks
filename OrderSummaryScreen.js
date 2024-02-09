@@ -11,46 +11,129 @@ import { useState, useEffect, useMemo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { LOTD_AbsoluteTopLeftFloatingButton, LOTD_AddDrinkFloatingButton, LOTD_PrimaryBottomFloatingButton, LOTD_SecondaryBottomFloatingButton } from './components/LOTD_Buttons';
 import { LOTD_DividerLine } from './components/LOTD_Lines'
+import { useDrinks } from './utils/DrinksContext';
+import { getValueFor } from './utils/AsyncStorage'
+import { apiSendOrder } from './utils/LOTD_Api';
 
 export const LOTD_OrderSummaryScreen = ({navigation}) => {
 
-	const [items, setItems] = useState([
-		{ id: 1, name: 'Stardust Elixir', quantity: 1, price: 8.50 },
-		{ id: 2, name: 'Droga pazza', quantity: 1, price: 8.50 }
-	]);
-
-	const [total, setTotal] = useState(items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2))
+	const { drinks, setDrinks, cartCount, setCartCount } = useDrinks();
+	const [note, setNote] = useState('');
+	const [total, setTotal] = useState(drinks.reduce((sum, drink) => sum + Number(drink.price) * drink.quantity, 0).toFixed(2))
 
 	useEffect(() => {
-		setTotal(items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2))
-	}, [items])
+		setTotal(drinks.reduce((sum, drink) => sum + Number(drink.price) * drink.quantity, 0).toFixed(2))
+	}, [drinks])
 
-	const removeItemFromCart = (itemId) => {
-		setItems(currentItems => currentItems.filter(item => item.id !== itemId));
+	const updateData = (drinkId, drinkNewQuantity) => {
+		setDrinks(currentDrinks => {
+			const updatedDrinks = currentDrinks.map(drink => {
+				if (Number(drink.id) === drinkId) {
+					return { ...drink, quantity: drinkNewQuantity };
+				}
+				return drink;
+			});
+	
+			const newCartCount = updatedDrinks.reduce((acc, { quantity }) => acc + quantity, 0);
+			setCartCount(newCartCount);
+	
+			return updatedDrinks;
+		});
 	};
 
-	const updateData = (itemId, itemNewQuantity) => {
-		setItems(currentItems => currentItems.map(item => {
-			if (item.id === itemId) {
-				return { ...item, quantity: itemNewQuantity };
-			}
-			return item;
+	const handlePlaceOrder = () => {
+
+		if (cartCount === 0) {
+			Alert.alert("Empty cart", "There are no drinks in the cart.");
+			return; 
+		}
+
+		// Mostra un Alert per chiedere conferma
+		Alert.alert(
+			"Order confirmation",
+			"Are you sure you want to proceed?", 
+			[
+				{
+					text: "Cancel",
+					onPress: () => console.log("Order cancelled."),
+					style: "cancel"
+				},
+				{ 
+					text: "Confirm", 
+					onPress: () => placeOrder()
+				}
+			],
+			{ cancelable: false }
+		);
+	};
+
+	const placeOrder = () => {
+		const preparedDrinks = drinks.filter(drink => drink.quantity > 0).map(drink => ({
+			...drink,
+			id: Number(drink.id),
+			price: Number(drink.price),
 		}));
-	}
+	
+		getValueFor('userToken').then((token) => {
+			const order = {
+				drinks: preparedDrinks,
+				venue_id: 1,
+				token: token,
+				total: Number(total),
+				note: note
+			};
+
+			console.log(order);
+
+			apiSendOrder(order).then((token) => {
+				if (token != "0") {
+					const resetDrinks = drinks.map(drink => ({ ...drink, quantity: 0 }));
+					setDrinks(resetDrinks);
+					setCartCount(0);
+			
+					console.log("Order placed.")
+
+					navigation.replace('Notification', {
+						notificationImagePath: require('./assets/eye_ok_icon.png'),
+						notificationText: 'The order is on its way!',
+						nextRoute: 'Venue',
+						replace: false
+					});
+				} else {
+					console.log("Order error.")
+
+					navigation.replace('Notification', {
+						notificationImagePath: require('./assets/eye_error_icon.png'),
+						notificationText: 'Something went wrong.',
+						nextRoute: 'Venue',
+						replace: false
+					});
+				}
+			}).catch(() => {
+				console.log("Order error.")
+
+				navigation.replace('Notification', {
+					notificationImagePath: require('./assets/eye_error_icon.png'),
+					notificationText: 'Something went wrong.',
+					nextRoute: 'Venue',
+					replace: false
+				});
+			})
+		});
+	};
 
 	return (
 		<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 			<Pressable>
 				<ScrollView style={[styles.scroll_view, {height: '35%', backgroundColor: '#FFFFFF'}]} contentContainerStyle={{ flexGrow: 1 }}>
 					<Pressable>
-						{items.map(item => (
+						{drinks.filter(drink => drink.quantity > 0).map(drink => (
 							<LOTD_EditableCartItem
-								key={item.id}
-								productId={item.id}
-								productName={item.name}
-								quantity={item.quantity}
-								price={item.price}
-								onRemove={removeItemFromCart}
+								key={Number(drink.id, 10)}
+								productId={Number(drink.id, 10)}
+								productName={drink.name}
+								quantity={Number(drink.quantity)}
+								price={drink.price}
 								onUpdate={updateData}
 							/>
 						))}
@@ -64,7 +147,7 @@ export const LOTD_OrderSummaryScreen = ({navigation}) => {
 								<Text style={{color: '#5A5A5A', fontSize: 16, fontFamily: 'RedHatText-Bold'}}>Note</Text>
 							</View>
 							<View>
-								<LOTD_Input multiline={true} minHeight={100} textAlignVertical='top'/>
+								<LOTD_Input multiline={true} minHeight={100} textAlignVertical='top' onChangeText={setNote} />
 							</View>
 							<LOTD_DividerLine />
 							<View style={{alignContent: 'center', alignItems: 'center'}}>
@@ -74,7 +157,7 @@ export const LOTD_OrderSummaryScreen = ({navigation}) => {
 						</View>
 						
 						<View style={{paddingLeft: 20, paddingRight: 20, backgroundColor: '#FFFFFF', flex: 0.25}}>
-							<LOTD_Button title="Place order"/>
+							<LOTD_Button title="Place order" onPress={handlePlaceOrder}/>
 						</View>
 					</View>
 				</View>
@@ -87,27 +170,16 @@ const LOTD_EditableCartItem = (props) => {
 
 	const [quantity, setQuantity] = useState(props.quantity);
 
-	useEffect(() => {
-		if (quantity === 0) {
-			props.onRemove(props.productId);
-		}
-	}, [quantity, props.onRemove, props.productId]);
-
 	const increment = () => {
-		const newQuantity = quantity + 1
+		const newQuantity = quantity + 1;
 		setQuantity(newQuantity);
-		props.onUpdate(props.productId, newQuantity)
+		props.onUpdate(props.productId, newQuantity);
 	};
   
 	const decrement = () => {
-		let newQuantity = 0
-		if (quantity > 1) {
-			newQuantity = quantity - 1
-			setQuantity(newQuantity);
-		} else {
-			setQuantity(0);
-		}
-		props.onUpdate(props.productId, newQuantity)
+		const newQuantity = Math.max(0, quantity - 1);
+		setQuantity(newQuantity);
+		props.onUpdate(props.productId, newQuantity);
 	};
 
 	return (
@@ -118,7 +190,7 @@ const LOTD_EditableCartItem = (props) => {
 				</TouchableOpacity>
 				<Text style={{fontSize: 16, fontFamily: 'RedHatText-Medium'}}>
 					<Text style={{fontFamily: 'RedHatText-Bold'}}>{`${quantity}x`}</Text><Text>{` ${props.productName}`}</Text>
-					<Text style={{fontFamily: 'RedHatText-Bold'}}>{` ${(props.price).toFixed(2)} €`}</Text>
+					<Text style={{fontFamily: 'RedHatText-Bold'}}>{` ${(Number(props.price)).toFixed(2)} €`}</Text>
 				</Text>
 				<TouchableOpacity onPress={increment} style={styles.button}>
 					<FontAwesome name="plus-circle" size={24} color="#FF5569" />

@@ -3,13 +3,16 @@ import { StyleSheet, Text, View, Image } from 'react-native';
 import { LOTD_TopRightProfileButton, LOTD_TopLeftLogoutButton, LOTD_EyeQRButton } from './components/LOTD_Buttons';
 import { getValueFor, deleteSecureItem } from './utils/AsyncStorage'
 import { apiLogout } from './utils/LOTD_Api';
+import { Alert } from 'react-native';
 
 export const LOTD_HomeScreen = ({navigation}) => {
 	const handleLogoutButtonClick = () => {
 		getValueFor('userToken').then((token) => {
 			apiLogout(token).then((token) => {
-				if (token == "0") {
+				if (token != "0") {
 					deleteSecureItem('userToken').then(navigation.replace('Auth'))
+				} else {
+					Alert.alert('Logout error', 'Couldn\'t logout correctly.\n');
 				}
 			})
 		})

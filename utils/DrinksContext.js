@@ -11,7 +11,7 @@ export const DrinksProvider = ({ children }) => {
     const updateCartCount = (drinkName) => {
         setDrinks(currentDrinks => {
             return currentDrinks.map(drink => {
-                if (drink.name === drinkName) {
+                if (drink && drink.name === drinkName) {
                     return { ...drink, quantity: drink.quantity + 1 };
                 }
                 return drink;
