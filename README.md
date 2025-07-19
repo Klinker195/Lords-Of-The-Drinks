@@ -122,5 +122,6 @@ npm run ios           # launch on iOS simulator (macOS required)
 
 Scan the QR code printed by Expo to load the app on a physical device.
 
+---
 
 *Cheers & Happy Coding!* 🍸
